@@ -1,42 +1,16 @@
 from datetime import datetime
 
-from langchain_community.tools import (
-    DuckDuckGoSearchRun,
-    WikipediaQueryRun,
-)
-from langchain_community.utilities import WikipediaAPIWrapper
-from langchain_core.tools import tool
+from langchain_community.tools import DuckDuckGoSearchRun
+from langchain_core.tools import Tool
 
 
-# Web search
-search = DuckDuckGoSearchRun()
+# Save research to a text file
 
 
-@tool
-def web_search(query: str) -> str:
-    """Search the web for recent information."""
-    return search.run(query)
-
-
-# Wikipedia
-api_wrapper = WikipediaAPIWrapper(
-    top_k_results=1,
-    doc_content_chars_max=2000,
-)
-
-wiki_tool = WikipediaQueryRun(
-    api_wrapper=api_wrapper
-)
-
-
-# Save research to file
-@tool
 def save_to_txt(
     data: str,
     filename: str = "research_output.txt"
 ) -> str:
-    """Save research data to a text file."""
-
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     formatted_text = (
@@ -48,11 +22,29 @@ def save_to_txt(
     with open(filename, "a", encoding="utf-8") as file:
         file.write(formatted_text)
 
-    return f"Data successfully saved to {filename}"
+    return f"Research successfully saved to {filename}"
 
 
+save_tool = Tool(
+    name="save_text_to_file",
+    func=save_to_txt,
+    description="Saves research data to a text file."
+)
+
+# DuckDuckGo Web Search
+
+search_tool = DuckDuckGoSearchRun(
+    name="web_search",
+    description=(
+        "Search the web for current and recent information. "
+        "Use this tool when the user asks about people, "
+        "companies, technology, current events, or any "
+        "information that may require up-to-date information."
+    )
+)
+
+# Tools available to the agent
 tools = [
-    web_search,
-    wiki_tool,
-    save_to_txt,
+    search_tool,
+    save_tool,
 ]
